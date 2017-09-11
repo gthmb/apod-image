@@ -9,7 +9,7 @@ The default `apod-image` has an info toggle button that can be tapped to toggle 
 
 If you want to use a custom information overlay, you can set the `custom-info` attribute on your instance. The markup you want to show for the overlay should be passed into the `info` slot. Please see the [demo page](https://www.webcomponents.org/element/gthmb/apod-image/demo/demo/index.html) for an example.
 
-While most of the APOD images are actually images, sometimes NASA shares a YouTube video instead. In this case, the `apod-image` will render a YouTube player when the `apod-request` returns a video instead of an image.
+While most of the APOD images are actually images, sometimes NASA shares a video instead. In this case, the `apod-image` will render a the video URL in an Frame. The info overlay is still available in for video assets.
 
 Live Example (needs valid API Key to render):
 <!--
