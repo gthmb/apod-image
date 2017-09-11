@@ -1,0 +1,504 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../apod-request/apod-request.html">
+<link rel="import" href="../resize-aware/resize-aware.html">
+<link rel="import" href="../polymer/lib/mixins/gesture-event-listeners.html">
+<link href="https://fonts.googleapis.com/css?family=Lato:200,300,400,600,900" rel="stylesheet">
+
+<dom-module id="apod-image">
+    <template>
+        <style>
+            :host {
+                --apod-text-color: #fff;
+                --apod-accent-color: #F8E81C;
+                --apod-text-background: rgba(0, 0, 0, 0.65);
+                --apod-font-family: 'Lato', sans-serif;
+                font-family: var(--apod-font-family);
+                display: block;
+            }
+
+            [hidden] {
+                display: none;
+            }
+
+            #container {
+                position: relative;
+                opacity: 0.0;
+                transition: opacity 0.8s ease-out;
+                overflow: hidden;
+            }
+
+            #container.fade-in {
+                opacity: 1.0;
+            }
+
+            resize-aware[is-video]{
+                margin-top: -20px;
+            }
+
+            #img {
+                width: 100%;
+            }
+
+            #ytContainer {
+                position: relative;
+                width: 100%;
+                height: 0;
+                padding-bottom: 56.25%;
+            }
+            
+            #yt {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            #info-overlay {
+                display: flex;
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+            }
+
+            #info-overlay:not([info-showing]){
+                visibility: hidden;
+                transition: visibility 0s linear;
+                transition-delay: 0.5s;
+            }
+
+            #info-overlay[info-showing]{
+                visibility: visible;
+                transition: visibility 0s linear;
+                transition-delay: 0.0s;
+            }
+
+            .default-info-holder {
+                display: flex;
+                max-height: 85%;
+            }
+
+            #defaultInfo:not([hidden]) {
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                top: 0px;
+                bottom: 30px;
+                width: 100%;
+            }
+
+            .info-text-box {
+                background: var(--apod-text-background);
+                color: var(--apod-text-color);
+                margin: 5px;
+                padding: 5px 10px;
+                border-radius: 1px;
+            }
+
+            /* date stuff */
+            .date-box-holder {
+                animation-duration: .4s;
+                animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+                animation-fill-mode: forwards;
+            }
+
+            .date-box-holder[slide-in] {
+                animation-name: slide-in;
+            }
+
+            .date-box-holder:not([slide-in]) {
+                animation-name: slide-out;
+            }
+            
+            .date-box {
+                display: inline-flex;
+                flex-direction: row;
+                padding: 6px 10px 10px 10px;
+            }
+            
+            .date-box-month-day {
+                display: flex;
+                flex-direction: column;
+                font-weight: 900;
+                font-size: 72px;
+                color: var(--apod-accent-color);
+                line-height: 56px;
+                margin: 2px;
+            }
+
+            .date-box-year {
+                writing-mode: vertical-lr;
+                text-orientation: upright;
+                font-weight: 900;
+                font-size: 32px;
+                line-height: 25px;
+                letter-spacing: -11px;
+                margin-top: -3.5px;
+            }
+
+            /* title and description stuff */
+            .info-body {
+                display: inline-flex;
+                flex-direction: column;
+                max-width: 550px;
+
+                animation-duration: .4s;
+                animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+                animation-fill-mode: forwards;
+            }
+
+            .info-body[zoom-in] {
+                animation-name: zoom-in;
+            }
+
+            .info-body:not([zoom-in]) {
+                animation-name: zoom-out;
+            }
+
+            .info-body-title-box {
+                font-size: 26px;
+                font-weight: 600;
+            }
+
+            .info-body-description-box {
+                overflow-y: auto;
+                font-weight: 300;
+            }
+
+            /* bottom stuff */
+            #copyright, #infoToggle {
+                display: inline-block;
+                position: absolute;
+                font-weight: 200;
+                bottom: 2px;
+                left: 0px;
+            }
+
+            #infoToggle {
+                left: initial;
+                right: 0px;
+                cursor: pointer;
+            }
+
+            #infoToggle[hidden] {
+                display: none;
+            }
+
+            /* smaller */
+            #container.smaller .info-body-title-box {
+                font-size: 16px;
+            }
+
+            #container.smaller .date-box-month-day {
+                font-size: 36px;
+                line-height: 30px;
+            }
+
+            #container.smaller .date-box-year {
+                font-size: 16px;
+                letter-spacing: -4px;
+                line-height: 14px;
+                margin-top: 1px;
+            }
+
+            /* smallest */
+            #container.smallest #defaultInfo, #container.smallest #infoToggle, #copyright[hidden] {
+                display: none;
+            }
+
+            /* sliding animations */
+            @keyframes slide-in {
+                0% { opacity: 0.0; transform: translate3d(-100%, 0, 0); }
+                100% { opacity: 1.0; transform: translate3d(0%, 0, 0); }
+            }
+
+            @keyframes slide-out {
+                0% { opacity: 1.0; transform: translate3d(0%, 0, 0); }
+                100% { opacity: 0.0; transform: translate3d(-100%, 0, 0); visibility: hidden;}
+            }
+            
+            /* scaling animations */
+            @keyframes zoom-in {
+                0% { opacity: 0.0; transform: scale3d(1.5,1.5,1.5); }
+                100% { opacity: 1.0; transform: scale3d(1,1,1); }
+            }
+
+            @keyframes zoom-out {
+                0% { opacity: 1.0; transform: scale3d(1,1,1); }
+                100% { opacity: 0.0; transform: scale3d(1.5,1.5,1.5); visibility: hidden}
+            }
+
+            /* custom info */
+            #customInfo:not([hidden]) {
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+            }
+
+        </style>
+
+
+        <apod-request id="req" api-key=[[apiKey]] hd=[[hd]] date=[[date]] data={{_data}}></apod-request>
+        <div id="container" info-showing$=[[infoShowing]]>
+            <resize-aware on-element-size-changed="__handleImageResized" is-video$=[[isVideo]]>
+                <img id="img">
+                <div id="ytContainer" hidden$=[[!isVideo]]>
+                    <iframe id="yt" src="https://www.youtube.com/embed/[[_ytVideoId]]" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </resize-aware>
+            <div id="info-overlay" info-showing$=[[infoShowing]]>
+                <div id="defaultInfo" hidden$=[[customInfo]]>
+                    <div class="default-info-holder">
+                        <div aria-label="apod image date" class="date-box-holder" slide-in$=[[infoShowing]]>
+                            <div class="date-box info-text-box">
+                                <div class="date-box-month-day">
+                                    <span class="month-text">[[_date.month]]</span>
+                                    <span class="date-text">[[_date.date]]</span>
+                                </div>
+                                <span class="date-box-year">[[_date.year]]</span>
+                            </div>
+                        </div>
+                        <div class="info-body" zoom-in$=[[infoShowing]]>
+                            <div aria-label="apod image title" class="info-body-title-box info-text-box">
+                                [[_data.title]]
+                            </div>
+                            <div aria-label="apod image description" class="info-body-description-box info-text-box">
+                                [[_data.explanation]]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="customInfo" hidden$=[[!customInfo]]>
+                    <span hidden$=[[!infoShowing]]>
+                        <slot name="info"></slot>
+                    </span>
+                </div>
+            </div>
+            <div id="copyright" aria-label="copyright" class="info-text-box" hidden$=[[!_copyright]]>© [[_copyright]]</div>
+            <div id="infoToggle" aria-label="toggle-info" class="info-text-box" hidden$=[[disableInfoToggle]]>[[_infoToggleLabel]]</div>
+        </div>
+    </template>
+
+    <script>
+        /**
+         * `apod-image`
+         * A Polymer 2.0 Custom Element for displaying NASA&#39;a Astromony Picture of the Day
+         *
+         * @customElement
+         * @polymer
+         * @demo demo/index.html
+         */
+        class ApodImage extends Polymer.GestureEventListeners(Polymer.Element) {
+            static get is() {
+                return 'apod-image';
+            }
+
+            static get properties() {
+                return {
+                    /**
+                     *  Your NASA api key. [Get one here](https://api.nasa.gov/index.html#apply-for-an-api-key)
+                     **/
+                    apiKey: {
+                        type: String,
+                        value: 'my-nasa-api-key',
+                    },
+
+                    /**
+                     * Flag to request High Definition version of the image (if available)
+                     **/
+                    hd: {
+                        type: Boolean,
+                        value: false
+                    },
+
+                    /**
+                     *  String in format: YYYY-MM-DD | The date for which you'd like the image
+                     **/
+                    date: {
+                        type: String,
+                        value: null
+                    },
+
+                    /**
+                     *  String that reflects the current status of the request: 'loading', 'success', and 'error'
+                     **/
+                    status: {
+                        type: String,
+                        value: 'loading',
+                        reflectToAttribute: true,
+                        readOnly: true,
+                        notify: true
+                    },
+
+                    /**
+                     *  The data object returned from the last successful request
+                     **/
+                    data: {
+                        type: String,
+                        reflectToAttribute: true,
+                        readOnly: true,
+                        notify: true
+                    },
+
+                    /**
+                     *  Flag indicating if a custom info overlay is to be used. If true, the default info overlay
+                     *  will be hidden, and the markup supplied in the info slot will be rendered in its place.
+                     **/
+                    customInfo: {
+                        type: Boolean,
+                        value: false
+                    },
+
+                    /**
+                     *  Flag indicating if the info toggle button, and image info is allowed to be shown. If true,
+                     *  the toggle button and info markup will be hidden. The copyright info (if available) will still
+                     *  be show.
+                     **/
+                    disableInfoToggle: {
+                        type: Boolean,
+                        value: false
+                    },
+
+                    /**
+                     * Flag indicating if the image info is being shown
+                     **/
+                    infoShowing: {
+                        type: Boolean,
+                        value: false,
+                        reflectToAttribute: true,
+                        notify: true
+                    },
+
+                    /**
+                     * Flag indicating if the image is actually a video
+                     **/
+                    isVideo: {
+                        type: Boolean,
+                        value: false,
+                        reflectToAttribute: true,
+                        notify: true,
+                        readOnly: true
+                    },
+
+                    _ytVideoId: {
+                        type: String,
+                        value: null
+                    },
+
+                    _data: {
+                        type: Object,
+                        value: null,
+                        observer: '_requestDataChanged'
+                    },
+
+                    _copyright: {
+                        type: String,
+                        value: null
+                    },
+
+                    _date: {
+                        type: Object,
+                        value: null
+                    },
+
+                    _infoToggleLabel: {
+                        type: String,
+                        value: null
+                    }
+                };
+            }
+
+            ready() {
+                super.ready();
+
+                Polymer.Gestures.addListener(this.$.infoToggle, 'tap', e => this.__handleTap(e));
+
+                this._setStatus('loading');
+
+                this.img = this.$.img;
+                this.img.addEventListener('load', () => {
+                    this.$.container.classList.add('fade-in');
+                    this._setStatus('success');
+                });
+
+                this.$.req.addEventListener('request-error', () => {
+                    this._setStatus('error');
+                });
+
+                this._infoToggleLabel = this.infoShowing ? 'Hide Info' : 'Show Info';
+            }
+
+            __handleTap(e) {
+                this.infoShowing = !this.infoShowing;
+                
+                if( this.infoShowing ) {
+                    this._infoToggleLabel = 'Hide Info';
+                } else {
+                    this._infoToggleLabel = 'Show Info';
+                }
+            }
+
+            _requestDataChanged() {
+                this._setIsVideo(false);
+                this._ytVideoId = null;
+
+                if (this._data) {
+                    this._setData(this._data);
+                    this._copyright = this._data.copyright;
+
+                    const dateArr = this._data.date.split('-');
+                    this._date = {
+                        year: dateArr[0],
+                        month: dateArr[1],
+                        date: dateArr[2]
+                    }
+
+                    switch( this._data.media_type ){
+                        case 'image':
+                            this.img.src = this._data.url;
+                        break;
+
+                        case 'video':
+                            this._setIsVideo(true);
+                            this._ytVideoId = this._data.url.slice( this._data.url.lastIndexOf('/') + 1, this._data.url.lastIndexOf('?') );
+                            this.$.container.classList.add('fade-in');
+                        break;
+                    }   
+                }
+            }
+
+            __handleImageResized(evt) {
+                const dims = evt.detail.value;                
+                let isPortrait = false;
+
+                if( dims.width - dims.height ) {
+                    if( dims.width < dims.height ) {
+                        isPortrait = true;
+                        this.$.container.classList.add('portrait');
+                        this.$.container.classList.remove('landscape');
+                    } else {
+                        this.$.container.classList.add('landscape');
+                        this.$.container.classList.remove('portrait');
+                    } 
+                }
+
+                this.$.container.classList.remove('smaller');
+                this.$.container.classList.remove('smallest')
+                
+                if( (isPortrait && dims.width < 300) || (!isPortrait && dims.height < 200)) {
+                    this.$.container.classList.add('smallest');
+                } else if( (isPortrait && dims.width < 450) || (!isPortrait && dims.height < 325)) {
+                    this.$.container.classList.add('smaller');
+                }
+            }
+        }
+
+        window.customElements.define(ApodImage.is, ApodImage);
+    </script>
+</dom-module>

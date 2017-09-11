@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>apod-image demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../apod-image.html">
+
+    <custom-style>
+        <style is="custom-style" include="demo-pages-shared-styles">
+
+        </style>
+    </custom-style>
+</head>
+
+<body>
+    <div class="vertical-section-container centered">
+        <h3>Basic apod-image demo (Today's Image)</h3>
+        <demo-snippet>
+            <template>
+                <apod-image 
+                    api-key="my-nasa-api-key"
+                >
+                </apod-image>
+            </template>
+        </demo-snippet>
+    </div>
+
+    <div class="vertical-section-container centered">
+        <h3>Targetting a specific date</h3>
+        <demo-snippet>
+            <template>
+                <apod-image 
+                    api-key="my-nasa-api-key" 
+                    date="2017-09-07"
+                >
+                </apod-image>
+            </template>
+        </demo-snippet>
+    </div>
+
+    <div class="vertical-section-container centered">
+        <h3>Showing the info by default</h3>
+        <demo-snippet>
+            <template>
+                <apod-image 
+                    api-key="my-nasa-api-key" 
+                    date="2017-08-16"
+                    info-showing
+                >
+                </apod-image>
+            </template>
+        </demo-snippet>
+    </div>
+
+    <div class="vertical-section-container centered">
+        <h3>Disable the extra info toggle</h3>
+        <demo-snippet>
+            <template>
+                <apod-image 
+                    api-key="my-nasa-api-key" 
+                    date="2017-08-24"
+                    disable-info-toggle
+                >
+                </apod-image>
+            </template>
+        </demo-snippet>
+    </div>
+
+    <div class="vertical-section-container centered">
+        <h3>Custom Info Overlay</h3>
+        <demo-snippet>
+            
+            <link href="https://fonts.googleapis.com/css?family=Libre+Barcode+128+Text" rel="stylesheet">
+            
+            <template>
+                <style>
+                    #demoHeader {
+                        font-family: 'Libre Barcode 128 Text', cursive;
+                        font-size: 40px;
+                        color: white;
+                    }
+
+                    #demoDescription {
+                        max-height: 45%;
+                        overflow: auto;
+                    }
+
+                    #myContent {
+                        background: rgba(200, 0, 0, 0.5);
+                        padding: 20px;
+                        margin: 10px;
+                        height: 80%;
+                        box-sizing: border-box;
+                    }
+
+                    [slot=info] {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        color: white;
+                        height: 100%;
+                    }
+                </style>
+                <apod-image id="customInfoDemo"
+                    api-key="my-nasa-api-key" 
+                    date="2017-08-25"
+                    custom-info
+                >
+                <div slot="info">
+                    <div id="myContent">
+                        <h1 id="demoHeader"></h1>
+                        <p id="demoDescription"></p>
+                        <p id="demoDate"></p>
+                    </div>
+                </div>
+                </apod-image>
+
+                <script>
+                    const demo = document.querySelector('#customInfoDemo'),
+                    header = document.querySelector('#demoHeader'),
+                    description = document.querySelector('#demoDescription');
+                    date = document.querySelector('#demoDate');
+                    
+                    demo.addEventListener('data-changed', (evt) => {
+                        header.innerHTML = demo.data.title;
+                        description.innerHTML = demo.data.explanation;
+                        date.innerHTML = demo.data.date;
+                    });
+                </script>
+            </template>
+        </demo-snippet>
+    </div>
+    <script>
+        this.document.querySelectorAll('apod-image').forEach( apod => {
+            apod.setAttribute('api-key', 'Q2S9UOPbcMVSPCCL8uIjI7Mq7dTgGnW4VBUiiuo1');
+        })
+    </script>
+</body>
+
+</html>

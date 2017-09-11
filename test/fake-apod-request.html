@@ -1,0 +1,33 @@
+<link rel="import" href="../../apod-request/apod-request.html">
+
+<dom-module id="fake-apod-request">
+    <template>
+    </template>
+
+    <script>
+        
+        class FakeApodRequest extends ApodRequest {
+
+            static get is() {
+                return 'fake-apod-request';
+            }
+
+            makeRequest() {
+                setTimeout( () => {
+                    this._setData({
+                        "copyright": "Ben Cooper",
+                        "date": "2017-08-22",
+                        "explanation": "Will the sky be clear enough to see the eclipse? This question was on the minds of many people attempting to view yesterday's solar eclipse. The path of total darkness crossed the mainland of the USA from coast to coast, from Oregon to South Carolina -- but a partial eclipse occurred above all of North America.  Unfortunately, many locations saw predominantly clouds. One location that did not was a bank of Green River Lake, Wyoming.  There, clouds blocked the Sun intermittantly up to one minute before totality. Parting clouds then moved far enough away to allow the center image of the featured composite sequence to be taken. This image shows the corona of the Sun extending out past the central dark Moon that blocks our familiar Sun. The surrounding images show the partial phases of the solar eclipse both before and after totality.",
+                        "hdurl": "./imgs/EclipseWyoming_Cooper_960.jpg",
+                        "media_type": "image",
+                        "service_version": "v1",
+                        "title": "A Total Solar Eclipse over Wyoming",
+                        "url": "./imgs/EclipseWyoming_Cooper_960.jpg"
+                    });
+                }, 500);
+            }
+        }
+
+        window.customElements.define(FakeApodRequest.is, FakeApodRequest);
+    </script>
+</dom-module>

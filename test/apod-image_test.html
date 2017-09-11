@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>apod-image test</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../apod-image.html">
+    <link rel="import" href="./fake-apod-request.html">
+</head>
+
+<body>
+
+    <test-fixture id="BasicTestFixture">
+        <template>
+            <apod-image api-key="fake-test-key"></apod-image>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="ChangedPropertyTestFixture">
+        <template>
+            <apod-image prop1="new-prop1"></apod-image>
+        </template>
+    </test-fixture>
+
+    <script>
+        suite('apod-image', function () {
+            var apod;
+            var apodShadow;
+            var server;
+            
+            setup(function () {
+                replace('apod-request').with('fake-apod-request');
+            });
+            
+            suite('testing the default setting', function () {
+                setup(function () {
+                    apod = fixture('BasicTestFixture');
+                    apodShadow = apod.shadowRoot;
+                });
+
+                test('simple useage - positive path', function ( done ) {
+                    const request = apodShadow.querySelector('fake-apod-request'),
+                    img = apodShadow.querySelector('img'),
+                    title = apodShadow.querySelector('.info-body-title-box'),
+                    description = apodShadow.querySelector('.info-body-description-box'),
+                    month = apodShadow.querySelector('.month-text'),
+                    date = apodShadow.querySelector('.date-text'),
+                    year = apodShadow.querySelector('.date-box-year'),
+                    infoToggle = apodShadow.querySelector('#infoToggle'),
+                    copyright = apodShadow.querySelector('#copyright'),
+                    infoOverlay = apodShadow.querySelector('#info-overlay');
+
+                    setTimeout( () => {
+                        const data = JSON.parse( request.getAttribute('data') );
+
+                        // check values
+                        assert.isTrue(img.src.includes('/imgs/EclipseWyoming_Cooper_960.jpg'));
+                        assert.equal(title.innerHTML.trim(), data.title);
+                        assert.equal(description.innerHTML.trim(), data.explanation);
+                        assert.equal(month.innerHTML.trim(), '08');
+                        assert.equal(date.innerHTML.trim(), '22');
+                        assert.equal(year.innerHTML.trim(), '2017');
+                        assert.equal(copyright.innerHTML.trim(), '© ' + data.copyright);
+                        assert.equal(infoToggle.innerHTML.trim(), "Show Info");
+
+                        expect(apod.attributes).to.not.have.ownProperty('info-showing');
+                        expect(apod.getAttribute('status')).to.equal('success');
+
+                        // check display
+                        /* chai-webdrive not available... need to figure out how to test if element is showing */
+                        // expect(infoOverlay).dom.to.not.be.visible()
+                        
+                        infoToggle.click();
+
+                        flush( () => {
+                            expect(apod.attributes).to.have.ownProperty('info-showing');
+                            assert.equal(infoToggle.innerHTML.trim(), "Hide Info");
+
+                            infoToggle.click();
+
+                            flush( () => {
+                                expect(apod.attributes).to.not.have.ownProperty('info-showing');
+                                assert.equal(infoToggle.innerHTML.trim(), "Show Info");
+                                done();
+                            });
+                        });
+
+                        
+
+                        
+
+                        // done();
+                    }, 1500);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
