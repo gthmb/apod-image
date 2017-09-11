@@ -29,9 +29,3 @@ Live Example (needs valid API Key to render):
 <apod-image api-key="my-nasa-api-key"></apod-image>
 ```
 ^ Replace `my-nasa-api-key` with a valid api key. Need One? [Get one here](https://api.nasa.gov/index.html#apply-for-an-api-key). See the demo for some working examples.
-
-## Default usage
-```html
-<apod-image api-key="my-nasa-api-key">
-</apod-image>
-```
