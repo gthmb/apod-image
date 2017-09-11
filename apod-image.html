@@ -39,14 +39,14 @@
                 width: 100%;
             }
 
-            #ytContainer {
+            #videoContainer {
                 position: relative;
                 width: 100%;
                 height: 0;
                 padding-bottom: 56.25%;
             }
             
-            #yt {
+            #vid {
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -248,8 +248,8 @@
         <div id="container" info-showing$=[[infoShowing]]>
             <resize-aware on-element-size-changed="__handleImageResized" is-video$=[[isVideo]]>
                 <img id="img">
-                <div id="ytContainer" hidden$=[[!isVideo]]>
-                    <iframe id="yt" src="https://www.youtube.com/embed/[[_ytVideoId]]" frameborder="0" allowfullscreen></iframe>
+                <div id="videoContainer" hidden$=[[!isVideo]]>
+                    <iframe id="vid" frameborder="0" allowfullscreen></iframe>
                 </div>
             </resize-aware>
             <div id="info-overlay" info-showing$=[[infoShowing]]>
@@ -386,11 +386,6 @@
                         readOnly: true
                     },
 
-                    _ytVideoId: {
-                        type: String,
-                        value: null
-                    },
-
                     _data: {
                         type: Object,
                         value: null,
@@ -422,6 +417,8 @@
                 this._setStatus('loading');
 
                 this.img = this.$.img;
+                this.vid = this.$.vid;
+
                 this.img.addEventListener('load', () => {
                     this.$.container.classList.add('fade-in');
                     this._setStatus('success');
@@ -446,7 +443,6 @@
 
             _requestDataChanged() {
                 this._setIsVideo(false);
-                this._ytVideoId = null;
 
                 if (this._data) {
                     this._setData(this._data);
@@ -466,7 +462,7 @@
 
                         case 'video':
                             this._setIsVideo(true);
-                            this._ytVideoId = this._data.url.slice( this._data.url.lastIndexOf('/') + 1, this._data.url.lastIndexOf('?') );
+                            this.vid.src = this._data.url;
                             this.$.container.classList.add('fade-in');
                         break;
                     }   
